@@ -44,14 +44,49 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .rr{transition:background .15s}.rr:hover{background:rgba(45,143,98,0.04)}
 .go{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;opacity:.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 [data-theme="light"] .go{opacity:.012}
+.hb{display:none;width:40px;height:40px;align-items:center;justify-content:center;cursor:pointer;border-radius:8px;background:var(--inp);border:1px solid var(--bdr);flex-shrink:0}
+.hb span{display:block;width:18px;height:2px;background:var(--t2);position:relative;transition:all .3s}
+.hb span::before,.hb span::after{content:'';width:18px;height:2px;background:var(--t2);position:absolute;left:0;transition:all .3s}
+.hb span::before{top:-6px}.hb span::after{top:6px}
+.hb.open span{background:transparent}.hb.open span::before{top:0;transform:rotate(45deg)}.hb.open span::after{top:0;transform:rotate(-45deg)}
+.mob-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35;backdrop-filter:blur(2px)}
+.mob-ov.show{display:block}
+.sidebar{transition:transform .3s ease}
+@media(max-width:1024px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
+  .mn{margin-left:0!important}
+  .hb{display:flex}
+  .g5{grid-template-columns:repeat(2,1fr)!important}
+  .g4{grid-template-columns:repeat(2,1fr)!important}
+  .g3{grid-template-columns:repeat(2,1fr)!important}
+  .g32{grid-template-columns:1fr!important}
+  .g32 .cs2{grid-column:span 1!important}
+  .g2{grid-template-columns:1fr!important}
+  .gs4{grid-template-columns:repeat(2,1fr)!important}
+}
+@media(max-width:640px){
+  .mn>.p8{padding:1rem!important}
+  .hd-row{flex-direction:column;gap:10px;align-items:stretch!important}
+  .hd-act{width:100%;flex-wrap:wrap;gap:8px}.hd-act .hm{display:none}
+  .g5{grid-template-columns:1fr!important}
+  .g4{grid-template-columns:1fr!important}
+  .g3{grid-template-columns:1fr!important}
+  .g2{grid-template-columns:1fr!important}
+  .gs4{grid-template-columns:1fr!important}
+  .hd-px{padding-left:1rem!important;padding-right:1rem!important}
+  .reg-top{flex-direction:column;gap:8px}
+  .reg-top input{width:100%}
+  .fd.text-2xl{font-size:1.25rem}
+}
 </style>
 </head>
 <body class="min-h-screen overflow-x-hidden">
 <div class="go"></div>
+<div class="mob-ov" id="mobOv" onclick="tSB()"></div>
 <div class="flex min-h-screen">
 
 <!-- SIDEBAR -->
-<aside class="w-64 fixed h-full z-40 flex flex-col" style="background:var(--bg2);border-right:1px solid var(--bdr)">
+<aside class="sidebar w-64 fixed h-full z-40 flex flex-col" style="background:var(--bg2);border-right:1px solid var(--bdr)">
   <div class="p-5" style="border-bottom:1px solid var(--bdr)">
     <div class="flex items-center gap-3">
       <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#2d8f62,#195c40)">
@@ -96,21 +131,24 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 </aside>
 
 <!-- MAIN -->
-<main class="flex-1 ml-64">
+<main class="mn flex-1 ml-64">
   <header class="sticky top-0 z-30 backdrop-blur-lg" style="background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--bdr)">
-    <div class="flex items-center justify-between px-8 py-4">
-      <div><h2 id="pT" class="fd text-xl font-medium" style="color:var(--t1)">Dashboard Overview</h2><p id="pS" class="text-xs mt-0.5" style="color:var(--t4)">Birmingham City Schools · 42 schools · 2,180 teachers · 23,400 students</p></div>
-      <div class="flex items-center gap-4">
-        <div class="flex items-center gap-2"><span class="text-[10px] uppercase tracking-wider" style="color:var(--t4)">Theme</span><div class="tt" onclick="tT()"><span class="ti ti-m">🌙</span><span class="ti ti-s">☀️</span></div></div>
-        <select class="rounded-lg px-3 py-1.5 text-xs focus:outline-none pr-7" style="background:var(--inp);border:1px solid var(--bdr);color:var(--t2)"><option>Q1 2026</option><option>Q4 2025</option><option>This Year</option><option>All Time</option></select>
+    <div class="hd-row flex items-center justify-between hd-px px-8 py-4">
+      <div class="flex items-center gap-3">
+        <div class="hb" id="hamBtn" onclick="tSB()"><span></span></div>
+        <div><h2 id="pT" class="fd text-xl font-medium" style="color:var(--t1)">Dashboard Overview</h2><p id="pS" class="text-xs mt-0.5" style="color:var(--t4)">Birmingham City Schools · 42 schools · 2,180 teachers · 23,400 students</p></div>
+      </div>
+      <div class="hd-act flex items-center gap-4">
+        <div class="flex items-center gap-2"><span class="hm text-[10px] uppercase tracking-wider" style="color:var(--t4)">Theme</span><div class="tt" onclick="tT()"><span class="ti ti-m">🌙</span><span class="ti ti-s">☀️</span></div></div>
+        <select class="hm rounded-lg px-3 py-1.5 text-xs focus:outline-none pr-7" style="background:var(--inp);border:1px solid var(--bdr);color:var(--t2)"><option>Q1 2026</option><option>Q4 2025</option><option>This Year</option><option>All Time</option></select>
         <button onclick="xR(this)" class="flex items-center gap-2 text-white text-xs font-medium px-4 py-2 rounded-lg" style="background:#1f724e">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Export
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><span class="hm">Export</span>
         </button>
       </div>
     </div>
   </header>
 
-  <div class="p-8">
+  <div class="p8 p-8">
 
     <!-- CHECKLIST -->
     <div id="s-checklist" class="sp">
@@ -132,15 +170,15 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
     <!-- OVERVIEW -->
     <div id="s-overview" class="sp active">
-      <div class="grid grid-cols-5 gap-4 mb-8" id="kR"></div>
-      <div class="grid grid-cols-3 gap-6 mb-8">
-        <div class="cd rounded-xl p-6 col-span-2">
+      <div class="g5 grid grid-cols-5 gap-4 mb-8" id="kR"></div>
+      <div class="g32 grid grid-cols-3 gap-6 mb-8">
+        <div class="cs2 cd rounded-xl p-6 col-span-2">
           <div class="flex items-center justify-between mb-4"><h3 class="fd text-sm font-medium" style="color:var(--t1)">AI Tool Adoption Trend</h3><div class="flex gap-4 text-[10px]" style="color:var(--t3)"><span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:#4aab7c"></span>Active Users</span><span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:#d4a853"></span>Resources</span></div></div>
           <canvas id="c1" height="180"></canvas>
         </div>
         <div class="cd rounded-xl p-6"><h3 class="fd text-sm font-medium mb-4" style="color:var(--t1)">Teacher Literacy</h3><canvas id="c2" height="200"></canvas><div class="grid grid-cols-3 gap-2 mt-4 text-center"><div><p class="text-xs font-medium" style="color:#4aab7c">42%</p><p class="text-[10px]" style="color:var(--t4)">Advanced</p></div><div><p class="text-xs font-medium" style="color:#d4a853">35%</p><p class="text-[10px]" style="color:var(--t4)">Proficient</p></div><div><p class="text-xs font-medium" style="color:#e07a5f">23%</p><p class="text-[10px]" style="color:var(--t4)">Emerging</p></div></div></div>
       </div>
-      <div class="grid grid-cols-2 gap-6">
+      <div class="g2 grid grid-cols-2 gap-6">
         <div class="cd rounded-xl p-6"><h3 class="fd text-sm font-medium mb-4" style="color:var(--t1)">Student Outcomes</h3><canvas id="c3" height="200"></canvas></div>
         <div class="cd rounded-xl p-6"><h3 class="fd text-sm font-medium mb-4" style="color:var(--t1)">Compliance Alerts</h3><div id="alC" class="space-y-3"></div></div>
       </div>
@@ -148,42 +186,42 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
     <!-- REGISTRY -->
     <div id="s-registry" class="sp"><div class="cd rounded-xl overflow-hidden">
-      <div class="p-6 flex items-center justify-between" style="border-bottom:1px solid var(--bdr)">
+      <div class="reg-top p-6 flex items-center justify-between" style="border-bottom:1px solid var(--bdr)">
         <div><h3 class="fd font-medium" style="color:var(--t1)">AI Tool Registry</h3><p class="text-xs mt-1" style="color:var(--t4)">District-approved platforms — Birmingham area</p></div>
         <input type="text" id="rS" placeholder="Search…" oninput="fR()" class="rounded-lg px-3 py-1.5 text-xs w-48 focus:outline-none" style="background:var(--inp);border:1px solid var(--bdr);color:var(--t2)">
       </div>
-      <div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-[10px] uppercase tracking-wider" style="border-bottom:1px solid var(--bdr);color:var(--t4)"><th class="text-left py-3 px-6">Tool</th><th class="text-left py-3 px-4">Category</th><th class="text-left py-3 px-4">FERPA</th><th class="text-left py-3 px-4">COPPA</th><th class="text-left py-3 px-4">Grades</th><th class="text-left py-3 px-4">Schools</th><th class="text-left py-3 px-4">Teachers</th><th class="text-left py-3 px-4">Status</th></tr></thead><tbody id="rT"></tbody></table></div>
+      <div class="overflow-x-auto"><table class="w-full text-xs" style="min-width:700px"><thead><tr class="text-[10px] uppercase tracking-wider" style="border-bottom:1px solid var(--bdr);color:var(--t4)"><th class="text-left py-3 px-6">Tool</th><th class="text-left py-3 px-4">Category</th><th class="text-left py-3 px-4">FERPA</th><th class="text-left py-3 px-4">COPPA</th><th class="text-left py-3 px-4">Grades</th><th class="text-left py-3 px-4">Schools</th><th class="text-left py-3 px-4">Teachers</th><th class="text-left py-3 px-4">Status</th></tr></thead><tbody id="rT"></tbody></table></div>
     </div></div>
 
     <!-- COMPLIANCE -->
-    <div id="s-compliance" class="sp"><div class="grid grid-cols-3 gap-6 mb-6" id="cK"></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Compliance Scan Results</h3><div class="space-y-3" id="cSC"></div></div></div>
+    <div id="s-compliance" class="sp"><div class="g3 grid grid-cols-3 gap-4 mb-6" id="cK"></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Compliance Scan Results</h3><div class="space-y-3" id="cSC"></div></div></div>
 
     <!-- LITERACY -->
-    <div id="s-literacy" class="sp"><div class="grid grid-cols-2 gap-6 mb-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-2" style="color:var(--t1)">Literacy Benchmarking</h3><p class="text-xs mb-5" style="color:var(--t4)">Confidence by category</p><canvas id="c4" height="260"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-2" style="color:var(--t1)">Growth Over Time</h3><p class="text-xs mb-5" style="color:var(--t4)">Avg score (1–10) by quarter</p><canvas id="c5" height="260"></canvas></div></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">School-Level Breakdown</h3><div class="grid grid-cols-4 gap-4" id="sL"></div></div></div>
+    <div id="s-literacy" class="sp"><div class="g2 grid grid-cols-2 gap-6 mb-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-2" style="color:var(--t1)">Literacy Benchmarking</h3><p class="text-xs mb-5" style="color:var(--t4)">Confidence by category</p><canvas id="c4" height="260"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-2" style="color:var(--t1)">Growth Over Time</h3><p class="text-xs mb-5" style="color:var(--t4)">Avg score (1–10) by quarter</p><canvas id="c5" height="260"></canvas></div></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">School-Level Breakdown</h3><div class="gs4 grid grid-cols-4 gap-4" id="sL"></div></div></div>
 
     <!-- EFFICIENCY -->
-    <div id="s-efficiency" class="sp"><div class="grid grid-cols-4 gap-4 mb-6" id="eK"></div><div class="grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Time Savings by Task</h3><canvas id="c6" height="220"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Resources by Type</h3><canvas id="c7" height="220"></canvas></div></div></div>
+    <div id="s-efficiency" class="sp"><div class="g4 grid grid-cols-4 gap-4 mb-6" id="eK"></div><div class="g2 grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Time Savings by Task</h3><canvas id="c6" height="220"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Resources by Type</h3><canvas id="c7" height="220"></canvas></div></div></div>
 
     <!-- INSTRUCTION -->
-    <div id="s-instruction" class="sp"><div class="grid grid-cols-3 gap-4 mb-6" id="iK"></div><div class="grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Feedback Speed (Hours)</h3><canvas id="c8" height="220"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Top Prompt Templates</h3><div class="space-y-3" id="pL"></div></div></div></div>
+    <div id="s-instruction" class="sp"><div class="g3 grid grid-cols-3 gap-4 mb-6" id="iK"></div><div class="g2 grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Feedback Speed (Hours)</h3><canvas id="c8" height="220"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Top Prompt Templates</h3><div class="space-y-3" id="pL"></div></div></div></div>
 
     <!-- ENGAGEMENT -->
-    <div id="s-engagement" class="sp"><div class="grid grid-cols-3 gap-4 mb-6" id="gK"></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Engagement: AI vs. Traditional</h3><canvas id="c9" height="250"></canvas></div></div>
+    <div id="s-engagement" class="sp"><div class="g3 grid grid-cols-3 gap-4 mb-6" id="gK"></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Engagement: AI vs. Traditional</h3><canvas id="c9" height="250"></canvas></div></div>
 
     <!-- INTERVENTIONS -->
-    <div id="s-interventions" class="sp"><div class="grid grid-cols-3 gap-4 mb-6" id="nK"></div><div class="grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Intervention Funnel</h3><canvas id="c10" height="240"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Recent Interventions</h3><div class="space-y-3" id="iL"></div></div></div></div>
+    <div id="s-interventions" class="sp"><div class="g3 grid grid-cols-3 gap-4 mb-6" id="nK"></div><div class="g2 grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Intervention Funnel</h3><canvas id="c10" height="240"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Recent Interventions</h3><div class="space-y-3" id="iL"></div></div></div></div>
 
     <!-- OUTCOMES -->
-    <div id="s-outcomes" class="sp"><div class="grid grid-cols-4 gap-4 mb-6" id="oK"></div><div class="grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Pre/Post: AI vs. Traditional</h3><canvas id="c11" height="240"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">AI Content Integrity</h3><canvas id="c12" height="240"></canvas></div></div></div>
+    <div id="s-outcomes" class="sp"><div class="g4 grid grid-cols-4 gap-4 mb-6" id="oK"></div><div class="g2 grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Pre/Post: AI vs. Traditional</h3><canvas id="c11" height="240"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">AI Content Integrity</h3><canvas id="c12" height="240"></canvas></div></div></div>
 
     <!-- BUDGET -->
-    <div id="s-budget" class="sp"><div class="grid grid-cols-4 gap-4 mb-6" id="bK"></div><div class="grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Spending by Category</h3><canvas id="c13" height="240"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">ROI Projection</h3><canvas id="c14" height="240"></canvas></div></div></div>
+    <div id="s-budget" class="sp"><div class="g4 grid grid-cols-4 gap-4 mb-6" id="bK"></div><div class="g2 grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Spending by Category</h3><canvas id="c13" height="240"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">ROI Projection</h3><canvas id="c14" height="240"></canvas></div></div></div>
 
     <!-- DEVICES -->
-    <div id="s-devices" class="sp"><div class="grid grid-cols-4 gap-4 mb-6" id="dK"></div><div class="grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Device Ratio by School</h3><canvas id="c15" height="240"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Connectivity & Downtime</h3><canvas id="c16" height="240"></canvas></div></div></div>
+    <div id="s-devices" class="sp"><div class="g4 grid grid-cols-4 gap-4 mb-6" id="dK"></div><div class="g2 grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Device Ratio by School</h3><canvas id="c15" height="240"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Connectivity & Downtime</h3><canvas id="c16" height="240"></canvas></div></div></div>
 
     <!-- PD -->
-    <div id="s-pd" class="sp"><div class="grid grid-cols-4 gap-4 mb-6" id="pdK"></div><div class="grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">PD Completion by Module</h3><canvas id="c17" height="240"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Early Adopter Ambassadors</h3><div class="space-y-3" id="aL"></div></div></div></div>
+    <div id="s-pd" class="sp"><div class="g4 grid grid-cols-4 gap-4 mb-6" id="pdK"></div><div class="g2 grid grid-cols-2 gap-6"><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">PD Completion by Module</h3><canvas id="c17" height="240"></canvas></div><div class="cd rounded-xl p-6"><h3 class="fd font-medium mb-4" style="color:var(--t1)">Early Adopter Ambassadors</h3><div class="space-y-3" id="aL"></div></div></div></div>
 
   </div>
 </main>
@@ -310,6 +348,10 @@ function getChecklist(){return D.checklist}
 // ============================================================
 function tT(){const h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('et',n);iS(cur)}
 (function(){const s=localStorage.getItem('et');if(s)document.documentElement.setAttribute('data-theme',s)})();
+
+// Sidebar toggle
+function tSB(){const sb=document.querySelector('.sidebar'),ov=document.getElementById('mobOv'),hb=document.getElementById('hamBtn');sb.classList.toggle('open');ov.classList.toggle('show');if(hb)hb.classList.toggle('open')}
+function closeSB(){const sb=document.querySelector('.sidebar'),ov=document.getElementById('mobOv'),hb=document.getElementById('hamBtn');if(window.innerWidth<=1024){sb.classList.remove('open');ov.classList.remove('show');if(hb)hb.classList.remove('open')}}
 function gC(){const dk=document.documentElement.getAttribute('data-theme')==='dark';return{t:dk?'#94a3b8':'#64748b',g:dk?'rgba(71,85,105,.15)':'rgba(203,213,225,.4)',b:'#4aab7c',o:'#d4a853',c:'#e07a5f',s:'#5ba4cf',v:'#8b7fc7',m:dk?'rgba(71,85,105,.4)':'rgba(203,213,225,.6)',bf:dk?'rgba(74,171,124,.08)':'rgba(74,171,124,.12)',of:dk?'rgba(212,168,83,.05)':'rgba(212,168,83,.08)'}}
 
 // ============================================================
@@ -317,7 +359,7 @@ function gC(){const dk=document.documentElement.getAttribute('data-theme')==='da
 // ============================================================
 const SM={checklist:['AI Readiness Checklist','Complete foundational questions before launching AI integration'],overview:['Dashboard Overview','Birmingham City Schools · 42 schools · 2,180 teachers · 23,400 students'],registry:['AI Tool Registry','District-approved platforms — Birmingham area'],compliance:['Privacy & Compliance','FERPA/COPPA monitoring and audit results'],literacy:['Teacher AI Literacy','Benchmarking and quarterly confidence assessments'],efficiency:['Administrative Efficiency','Time savings and resource generation metrics'],instruction:['Instructional Quality','Differentiation, feedback speed, and prompt analytics'],engagement:['Student Engagement','Participation, attendance, and engagement analytics'],interventions:['Interventions','At-risk identification and intervention tracking'],outcomes:['Learning Outcomes','Test scores, adaptive growth, and integrity monitoring'],budget:['Budget & ROI','AI spending, E-Rate funding, and return on investment'],devices:['Devices & Connectivity','Device ratios, broadband, and uptime tracking'],pd:['Professional Development','PD completion, ambassadors, and training metrics']};
 let cur='overview';
-document.querySelectorAll('.sl').forEach(l=>{l.addEventListener('click',e=>{e.preventDefault();const s=l.dataset.s;if(!s)return;cur=s;document.querySelectorAll('.sl').forEach(x=>x.classList.remove('active'));l.classList.add('active');document.querySelectorAll('.sp').forEach(p=>p.classList.remove('active'));const el=document.getElementById('s-'+s);if(el)el.classList.add('active');document.getElementById('pT').textContent=SM[s]?.[0]||'';document.getElementById('pS').textContent=SM[s]?.[1]||'';iS(s)})});
+document.querySelectorAll('.sl').forEach(l=>{l.addEventListener('click',e=>{e.preventDefault();const s=l.dataset.s;if(!s)return;cur=s;document.querySelectorAll('.sl').forEach(x=>x.classList.remove('active'));l.classList.add('active');document.querySelectorAll('.sp').forEach(p=>p.classList.remove('active'));const el=document.getElementById('s-'+s);if(el)el.classList.add('active');document.getElementById('pT').textContent=SM[s]?.[0]||'';document.getElementById('pS').textContent=SM[s]?.[1]||'';iS(s);closeSB()})});
 
 // ============================================================
 // RENDER
