@@ -111,6 +111,25 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .toast-info{background:var(--bg2);color:var(--t2);border:1px solid var(--bdr)}
 @keyframes toastIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes toastOut{from{opacity:1}to{opacity:0}}
+/* Upload modal */
+.up-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9997;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.up-modal.show{display:flex}
+.up-box{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:24px;width:90%;max-width:560px;max-height:85vh;overflow-y:auto;animation:fs .3s ease}
+.up-preview{background:var(--inp);border:1px solid var(--bdr);border-radius:10px;padding:16px;max-height:320px;overflow-y:auto}
+.up-preview .up-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bdr)}
+.up-preview .up-row:last-child{border:none}
+.up-preview .up-key{font-size:12px;font-weight:500;color:var(--t1)}
+.up-preview .up-val{font-size:11px;color:var(--t3);text-align:right;max-width:55%}
+.up-preview .up-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600}
+.up-ok{background:rgba(74,171,124,.12);color:#4aab7c}
+.up-warn{background:rgba(245,158,11,.12);color:#f59e0b}
+.up-err{background:rgba(239,68,68,.12);color:#ef4444}
+.up-error{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:14px;margin-top:12px;font-size:12px;color:#ef4444}
+.up-section{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--t4);padding:10px 0 4px;font-weight:600}
+#upConfirm:disabled{opacity:.4;cursor:not-allowed}
+#upConfirm:not(:disabled):hover{filter:brightness(1.1)}
+.up-drop{border:2px dashed var(--bdr);border-radius:12px;padding:32px;text-align:center;transition:all .2s;cursor:pointer}
+.up-drop:hover,.up-drop.drag{border-color:#4aab7c;background:rgba(45,143,98,.04)}
 </style>
 </head>
 <body class="min-h-screen overflow-x-hidden">
@@ -179,10 +198,13 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><span class="hm">Export</span>
             <svg class="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
-          <div id="expMenu" class="exp-menu" onclick="this.classList.remove('show')">
-            <button onclick="dlJSON()"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Download JSON</button>
-            <button onclick="svJSON()"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>Save Data (JSON)</button>
-            <button onclick="prPDF()"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>Print PDF Report</button>
+          <div id="expMenu" class="exp-menu" onclick="event.target.closest('.exp-menu')&&!event.target.closest('button')&&this.classList.remove('show')">
+            <button onclick="dlJSON();this.closest('.exp-menu').classList.remove('show')"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Download JSON</button>
+            <button onclick="svJSON();this.closest('.exp-menu').classList.remove('show')"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>Save Data (JSON)</button>
+            <button onclick="prPDF();this.closest('.exp-menu').classList.remove('show')"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>Print PDF Report</button>
+            <div style="height:1px;background:var(--bdr);margin:4px 8px"></div>
+            <button onclick="document.getElementById('upFile').click();this.closest('.exp-menu').classList.remove('show')"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m4-8l-4-4m0 0L16 8m4-4v12M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"/></svg>Upload JSON Data</button>
+            <input type="file" id="upFile" accept=".json,application/json" style="display:none" onchange="handleUpload(this)">
           </div>
         </div>
       </div>
@@ -273,6 +295,26 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
   </div>
 </main>
+
+<!-- Upload Preview Modal -->
+<div id="upModal" class="up-modal" onclick="if(event.target===this)closeUpModal()">
+  <div class="up-box">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="fd text-lg font-semibold" style="color:var(--t1)">Upload JSON Data</h3>
+      <button onclick="closeUpModal()" class="p-1 rounded-lg" style="color:var(--t3)">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="upPreview" class="up-preview"></div>
+    <div id="upError" class="up-error" style="display:none"></div>
+    <div class="flex items-center gap-3 mt-5">
+      <button id="upConfirm" onclick="confirmUpload()" class="flex-1 flex items-center justify-center gap-2 text-white text-sm font-medium py-2.5 rounded-lg" style="background:#1f724e" disabled>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Apply Data
+      </button>
+      <button onclick="closeUpModal()" class="flex-1 text-sm font-medium py-2.5 rounded-lg" style="background:var(--inp);border:1px solid var(--bdr);color:var(--t2)">Cancel</button>
+    </div>
+  </div>
+</div>
 </div>
 
 <script>
@@ -601,6 +643,215 @@ document.addEventListener('keydown',e=>{
       URL.revokeObjectURL(url);
       showToast(`Snapshot ${n} downloaded`);
     }
+  }
+});
+
+// ============================================================
+// UPLOAD JSON
+// ============================================================
+let pendingUpload=null;
+
+function handleUpload(input){
+  const file=input.files[0];
+  if(!file)return;
+  input.value=''; // reset so same file can be re-selected
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const raw=JSON.parse(e.target.result);
+      validateAndPreview(raw,file.name);
+    }catch(err){
+      showUpError(`Invalid JSON file: ${err.message}`);
+    }
+  };
+  reader.onerror=()=>showUpError('Failed to read file');
+  reader.readAsText(file);
+}
+
+function validateAndPreview(data,fileName){
+  const modal=document.getElementById('upModal');
+  const preview=document.getElementById('upPreview');
+  const errEl=document.getElementById('upError');
+  const confirmBtn=document.getElementById('upConfirm');
+  errEl.style.display='none';
+  
+  // Validate structure
+  const checks=[];
+  const warn=[];
+  let valid=true;
+  
+  // Check if it's a full export or raw data
+  const isFullExport=!!data.meta;
+  const src=isFullExport?data:null;
+  
+  if(isFullExport){
+    checks.push({k:'Format',v:'Full Dashboard Export',ok:true});
+    checks.push({k:'District',v:data.meta.district||'Unknown',ok:true});
+    checks.push({k:'Exported',v:data.meta.exportedAt?new Date(data.meta.exportedAt).toLocaleString():'Unknown',ok:!!data.meta.exportedAt});
+    checks.push({k:'Version',v:data.meta.version||'—',ok:true});
+    
+    if(data.kpis)checks.push({k:'KPI Data',v:Object.keys(data.kpis).length+' sections',ok:true});
+    else{checks.push({k:'KPI Data',v:'Missing',ok:false});warn.push('KPI data missing')}
+    
+    if(data.registry)checks.push({k:'Registry',v:data.registry.length+' tools',ok:true});
+    else{checks.push({k:'Registry',v:'Missing',ok:false});warn.push('Registry data missing')}
+    
+    if(data.charts)checks.push({k:'Chart Data',v:Object.keys(data.charts).length+' charts',ok:true});
+    else{checks.push({k:'Chart Data',v:'Missing',ok:false});warn.push('Chart data missing')}
+    
+    if(data.complianceScans)checks.push({k:'Compliance',v:data.complianceScans.length+' scans',ok:true});
+    else warn.push('Compliance scans missing');
+    
+    if(data.alerts)checks.push({k:'Alerts',v:data.alerts.length+' items',ok:true});
+    if(data.promptTemplates)checks.push({k:'Prompts',v:data.promptTemplates.length+' templates',ok:true});
+    if(data.interventions)checks.push({k:'Interventions',v:data.interventions.length+' records',ok:true});
+    if(data.schoolLiteracy)checks.push({k:'Schools',v:data.schoolLiteracy.length+' schools',ok:true});
+    if(data.ambassadors)checks.push({k:'Ambassadors',v:data.ambassadors.length+' teachers',ok:true});
+    
+    if(data.checklist){
+      const hasResp=data.checklist.responses&&Object.keys(data.checklist.responses).length>0;
+      const hasNotes=data.checklist.notes&&Object.keys(data.checklist.notes).length>0;
+      checks.push({k:'Checklist Responses',v:hasResp?Object.values(data.checklist.responses).filter(Boolean).length+' answered':'None',ok:true});
+      if(hasNotes)checks.push({k:'Checklist Notes',v:Object.keys(data.checklist.notes).length+' notes',ok:true});
+    }
+    
+    // Need at least kpis or charts to be useful
+    if(!data.kpis&&!data.charts&&!data.registry){valid=false}
+  }else{
+    // Try to detect partial/raw data
+    checks.push({k:'Format',v:'Raw Data (no meta)',ok:false});
+    warn.push('File lacks meta wrapper — attempting partial import');
+    if(data.kpis||data.ch){checks.push({k:'Data Found',v:'Partial structure detected',ok:true});valid=true}
+    else{valid=false}
+  }
+  
+  // Build preview HTML
+  let html=`<div style="margin-bottom:8px;display:flex;align-items:center;gap:8px"><svg class="w-4 h-4" style="color:var(--t3)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><span style="font-size:12px;color:var(--t2);font-weight:500">${fileName}</span></div>`;
+  html+=`<div class="up-section">Validation</div>`;
+  checks.forEach(c=>{
+    html+=`<div class="up-row"><span class="up-key">${c.k}</span><span class="up-val"><span class="up-badge ${c.ok?'up-ok':'up-warn'}">${c.v}</span></span></div>`;
+  });
+  if(warn.length){
+    html+=`<div class="up-section">Warnings</div>`;
+    warn.forEach(w=>{html+=`<div class="up-row"><span class="up-val" style="max-width:100%;text-align:left;color:#f59e0b">⚠ ${w}</span></div>`});
+  }
+  
+  preview.innerHTML=html;
+  
+  if(!valid){
+    errEl.innerHTML='<strong>Cannot import:</strong> The file does not contain recognizable EduAI dashboard data. Please use a JSON file exported from this dashboard.';
+    errEl.style.display='block';
+    confirmBtn.disabled=true;
+  }else{
+    confirmBtn.disabled=false;
+    pendingUpload=data;
+  }
+  
+  modal.classList.add('show');
+}
+
+function showUpError(msg){
+  const modal=document.getElementById('upModal');
+  const preview=document.getElementById('upPreview');
+  const errEl=document.getElementById('upError');
+  const confirmBtn=document.getElementById('upConfirm');
+  preview.innerHTML=`<div style="text-align:center;padding:20px"><svg class="w-10 h-10 mx-auto mb-3" style="color:#ef4444" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg><p style="font-size:13px;color:var(--t2)">Failed to parse file</p></div>`;
+  errEl.innerHTML=msg;
+  errEl.style.display='block';
+  confirmBtn.disabled=true;
+  pendingUpload=null;
+  modal.classList.add('show');
+}
+
+function closeUpModal(){
+  document.getElementById('upModal').classList.remove('show');
+  pendingUpload=null;
+}
+
+function confirmUpload(){
+  if(!pendingUpload)return;
+  const data=pendingUpload;
+  const isFullExport=!!data.meta;
+  
+  try{
+    if(isFullExport){
+      // Apply KPIs
+      if(data.kpis){
+        Object.keys(data.kpis).forEach(k=>{
+          if(D.kpis[k])D.kpis[k]=data.kpis[k];
+        });
+      }
+      // Apply registry
+      if(data.registry)D.registry=data.registry;
+      // Apply scans
+      if(data.complianceScans)D.scans=data.complianceScans;
+      // Apply alerts
+      if(data.alerts)D.alerts=data.alerts;
+      // Apply prompts
+      if(data.promptTemplates)D.prompts=data.promptTemplates;
+      // Apply interventions
+      if(data.interventions)D.ivs=data.interventions;
+      // Apply schools
+      if(data.schoolLiteracy)D.schools=data.schoolLiteracy;
+      // Apply ambassadors
+      if(data.ambassadors)D.ambassadors=data.ambassadors;
+      // Apply charts
+      if(data.charts){
+        Object.keys(data.charts).forEach(k=>{
+          if(D.ch[k])D.ch[k]=data.charts[k];
+        });
+      }
+      // Apply checklist state
+      if(data.checklist){
+        if(data.checklist.responses){
+          cls=data.checklist.responses;
+          localStorage.setItem('ecl',JSON.stringify(cls));
+        }
+        if(data.checklist.notes){
+          cln=data.checklist.notes;
+          localStorage.setItem('ecn',JSON.stringify(cln));
+        }
+      }
+      // Update district selector if present
+      if(data.meta.district){
+        const sel=document.querySelector('aside select');
+        if(sel){
+          const opts=[...sel.options];
+          const match=opts.find(o=>o.value===data.meta.district);
+          if(match)sel.value=data.meta.district;
+        }
+      }
+    }else{
+      // Partial import — try mapping common shapes
+      if(data.kpis)Object.keys(data.kpis).forEach(k=>{if(D.kpis[k])D.kpis[k]=data.kpis[k]});
+      if(data.ch)Object.keys(data.ch).forEach(k=>{if(D.ch[k])D.ch[k]=data.ch[k]});
+    }
+    
+    // Re-render current section
+    iS(cur);
+    // Also refresh checklist badge
+    uCP();
+    
+    closeUpModal();
+    showToast(`Data imported successfully — ${isFullExport?'full':'partial'} update applied`);
+    
+  }catch(err){
+    showToast('Import error: '+err.message,'info');
+  }
+}
+
+// Drag & drop on the whole page
+document.addEventListener('dragover',e=>{e.preventDefault()});
+document.addEventListener('drop',e=>{
+  e.preventDefault();
+  const file=e.dataTransfer?.files?.[0];
+  if(file&&(file.type==='application/json'||file.name.endsWith('.json'))){
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{validateAndPreview(JSON.parse(ev.target.result),file.name)}
+      catch(err){showUpError('Invalid JSON: '+err.message)}
+    };
+    reader.readAsText(file);
   }
 });
 
