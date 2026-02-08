@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduAI Compass — AI Integration Tracker for K-12</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['Fraunces', 'serif'],
+        body: ['DM Sans', 'sans-serif'],
+      },
+      colors: {
+        slate: {
+          925: '#0c1222',
+          950: '#060a14',
+        },
+        brand: {
+          50: '#eef7f2',
+          100: '#d5ede0',
+          200: '#aedbc4',
+          300: '#7ac4a0',
+          400: '#4aab7c',
+          500: '#2d8f62',
+          600: '#1f724e',
+          700: '#195c40',
+          800: '#154a34',
+          900: '#123d2c',
+        },
+        accent: {
+          gold: '#d4a853',
+          goldLight: '#f5e6c4',
+          coral: '#e07a5f',
+          sky: '#5ba4cf',
+          violet: '#8b7fc7',
+        }
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; }
+  h1, h2, h3, .font-display { font-family: 'Fraunces', serif; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0c1222; }
+  ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+  .sidebar-link {
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+  }
+  .sidebar-link:hover, .sidebar-link.active {
+    background: rgba(45, 143, 98, 0.1);
+    border-left-color: #2d8f62;
+    color: #7ac4a0;
+  }
+
+  .card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(20, 30, 52, 0.9));
+    border: 1px solid rgba(71, 85, 105, 0.25);
+    backdrop-filter: blur(12px);
+    transition: all 0.3s ease;
+  }
+  .card:hover {
+    border-color: rgba(45, 143, 98, 0.35);
+    box-shadow: 0 0 30px rgba(45, 143, 98, 0.06);
+  }
+
+  .stat-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
+  }
+  .stat-card[data-accent="green"] { --accent-start: #2d8f62; --accent-end: #4aab7c; }
+  .stat-card[data-accent="gold"] { --accent-start: #d4a853; --accent-end: #f5e6c4; }
+  .stat-card[data-accent="coral"] { --accent-start: #e07a5f; --accent-end: #f4a389; }
+  .stat-card[data-accent="sky"] { --accent-start: #5ba4cf; --accent-end: #93c5e8; }
+  .stat-card[data-accent="violet"] { --accent-start: #8b7fc7; --accent-end: #b3aade; }
+
+  .compliance-badge { animation: pulse-soft 3s ease-in-out infinite; }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .progress-ring { transition: stroke-dashoffset 1s ease-in-out; }
+
+  .tab-btn {
+    transition: all 0.25s ease;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-btn.active {
+    border-bottom-color: #2d8f62;
+    color: #7ac4a0;
+  }
+
+  .registry-row { transition: background 0.15s ease; }
+  .registry-row:hover { background: rgba(45, 143, 98, 0.05); }
+
+  .fade-in {
+    animation: fadeIn 0.5s ease forwards;
+    opacity: 0;
+  }
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  .slide-up {
+    animation: slideUp 0.6s ease forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  @keyframes slideUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .grain-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+
+  .toggle-switch {
+    width: 36px; height: 20px;
+    background: #334155;
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  .toggle-switch.on { background: #2d8f62; }
+  .toggle-switch::after {
+    content: '';
+    width: 16px; height: 16px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px; left: 2px;
+    transition: transform 0.3s ease;
+  }
+  .toggle-switch.on::after { transform: translateX(16px); }
+
+  .section-panel { display: none; }
+  .section-panel.active { display: block; }
+
+  .tooltip-container { position: relative; }
+  .tooltip-container .tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    z-index: 50;
+    border: 1px solid rgba(71, 85, 105, 0.4);
+  }
+  .tooltip-container:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+    bottom: calc(100% + 8px);
+  }
+
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-300 min-h-screen overflow-x-hidden">
+<div class="grain-overlay"></div>
+
+<!-- Layout -->
+<div class="flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-64 bg-slate-925 border-r border-slate-800/60 flex flex-col fixed h-full z-40 transition-transform duration-300">
+    <!-- Logo -->
+    <div class="p-6 border-b border-slate-800/60">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        </div>
+        <div>
+          <h1 class="font-display text-lg text-white font-semibold tracking-tight">EduAI</h1>
+          <p class="text-[10px] text-slate-500 uppercase tracking-[0.2em]">Compass</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- District selector -->
+    <div class="px-4 py-4 border-b border-slate-800/40">
+      <label class="text-[10px] uppercase tracking-wider text-slate-500 mb-2 block">District</label>
+      <select id="districtSelect" class="w-full bg-slate-900 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500/50 pr-8">
+        <option>Riverside Unified SD</option>
+        <option>Lincoln County Schools</option>
+        <option>Metro State Board</option>
+      </select>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 py-4 overflow-y-auto">
+      <div class="px-4 mb-3">
+        <span class="text-[10px] uppercase tracking-[0.2em] text-slate-600">Overview</span>
+      </div>
+      <a href="#" class="sidebar-link active block px-6 py-2.5 text-sm text-slate-400" data-section="overview">
+        <span class="flex items-center gap-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          Dashboard
+        </span>
+      </a>
+
+      <div class="px-4 mt-5 mb-3">
+        <span class="text-[10px] uppercase tracking-[0.2em] text-slate-600">I · Infrastructure</span>
+      </div>
+      <a href="#" class="sidebar-link block px-6 py-2.5 text-sm text-slate-400" data-section="registry">
+        <span class="flex items-center gap-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          AI Registry
+        </span>
+      </a>
+      <a href="#" class="sidebar-link block px-6 py-2.5 text-sm text-slate-400" data-section="compliance">
+        <span class="flex items-center gap-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Privacy & Compliance
+        </span>
+      </a>
+      <a href="#" class="sidebar-link block px-6 py-2.5 text-sm text-slate-400" data-section="literacy">
+        <span class="flex items-center gap-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          AI Literacy
+        </span>
+      </a>
+
+      <div class="px-4 mt-5 mb-3">
+        <span class="text-[10px] uppercase tracking-[0.2em] text-slate-600">II · Teacher Usage</span>
+      </div>
+      <a href="#" class="sidebar-link block px-6 py-2.5 text-sm text-slate-400" data-section="efficiency">
+        <span class="flex items-center gap-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Admin Efficiency
+        </span>
+      </a>
+      <a href="#" class="sidebar-link block px-6 py-2.5 text-sm text-slate-400" data-section="instruction">
+        <span class="flex items-center gap-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          Instructional Quality
+        </span>
+      </a>
+
+      <div class="px-4 mt-5 mb-3">
+        <span class="text-[10px] uppercase tracking-[0.2em] text-slate-600">III · Student Outcomes</span>
+      </div>
+      <a href="#" class="sidebar-link block px-6 py-2.5 text-sm text-slate-400" data-section="engagement">
+        <span class="flex items-center gap-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Engagement
+        </span>
+      </a>
+      <a href="#" class="sidebar-link block px-6 py-2.5 text-sm text-slate-400" data-section="interventions">
+        <span class="flex items-center gap-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Interventions
+        </span>
+      </a>
+      <a href="#" class="sidebar-link block px-6 py-2.5 text-sm text-slate-400" data-section="outcomes">
+        <span class="flex items-center gap-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Learning Outcomes
+        </span>
+      </a>
+    </nav>
+
+    <!-- Footer -->
+    <div class="p-4 border-t border-slate-800/40">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-brand-700 flex items-center justify-center text-white text-xs font-semibold">SA</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs text-slate-300 truncate">State Admin</p>
+          <p class="text-[10px] text-slate-500 truncate">admin@riverside.k12.us</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 ml-64">
+    <!-- Top Bar -->
+    <header class="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-lg border-b border-slate-800/40">
+      <div class="flex items-center justify-between px-8 py-4">
+        <div>
+          <h2 id="pageTitle" class="font-display text-xl text-white font-medium">Dashboard Overview</h2>
+          <p id="pageSubtitle" class="text-xs text-slate-500 mt-0.5">AI integration tracking across 47 schools · 2,340 teachers · 38,200 students</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <select id="timeRange" class="bg-slate-900 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none pr-7">
+            <option>This Quarter (Q1 2026)</option>
+            <option>Last Quarter (Q4 2025)</option>
+            <option>This Year</option>
+            <option>All Time</option>
+          </select>
+          <button class="relative p-2 text-slate-400 hover:text-white transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-accent-coral rounded-full"></span>
+          </button>
+          <button onclick="exportReport()" class="flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium px-4 py-2 rounded-lg transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Export Report
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Sections -->
+    <div class="p-8">
+
+      <!-- =============================== -->
+      <!-- OVERVIEW DASHBOARD -->
+      <!-- =============================== -->
+      <div id="section-overview" class="section-panel active">
+        <!-- KPI Row -->
+        <div class="grid grid-cols-5 gap-4 mb-8">
+          <div class="stat-card card rounded-xl p-5" data-accent="green">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Approved AI Tools</p>
+            <p class="text-2xl font-display text-white font-semibold">24</p>
+            <p class="text-xs text-brand-400 mt-1">+3 this quarter</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="gold">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">FERPA Compliant</p>
+            <p class="text-2xl font-display text-white font-semibold">91.7%</p>
+            <p class="text-xs text-accent-gold mt-1">22/24 tools pass</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="sky">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Teacher Adoption</p>
+            <p class="text-2xl font-display text-white font-semibold">78%</p>
+            <p class="text-xs text-accent-sky mt-1">↑ 12% from Q4</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="coral">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Avg. Hours Saved</p>
+            <p class="text-2xl font-display text-white font-semibold">6.2<span class="text-sm text-slate-400">/wk</span></p>
+            <p class="text-xs text-accent-coral mt-1">Per teacher avg</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="violet">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Student Score Δ</p>
+            <p class="text-2xl font-display text-white font-semibold">+8.3%</p>
+            <p class="text-xs text-accent-violet mt-1">AI cohort vs. trad.</p>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-3 gap-6 mb-8">
+          <div class="card rounded-xl p-6 col-span-2">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-display text-white text-sm font-medium">AI Tool Adoption Trend</h3>
+              <div class="flex gap-4 text-[10px] text-slate-400">
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-400"></span>Active Users</span>
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-accent-gold"></span>Resources Created</span>
+              </div>
+            </div>
+            <canvas id="adoptionChart" height="180"></canvas>
+          </div>
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white text-sm font-medium mb-4">Teacher Literacy Levels</h3>
+            <canvas id="literacyDonut" height="200"></canvas>
+            <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+              <div><p class="text-xs text-brand-400 font-medium">42%</p><p class="text-[10px] text-slate-500">Advanced</p></div>
+              <div><p class="text-xs text-accent-gold font-medium">35%</p><p class="text-[10px] text-slate-500">Proficient</p></div>
+              <div><p class="text-xs text-accent-coral font-medium">23%</p><p class="text-[10px] text-slate-500">Emerging</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="grid grid-cols-2 gap-6">
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white text-sm font-medium mb-4">Student Outcome Comparison</h3>
+            <canvas id="outcomesBar" height="200"></canvas>
+          </div>
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white text-sm font-medium mb-4">Compliance Alerts</h3>
+            <div class="space-y-3">
+              <div class="flex items-start gap-3 p-3 rounded-lg bg-red-500/5 border border-red-500/20">
+                <span class="w-2 h-2 rounded-full bg-red-400 mt-1.5 compliance-badge flex-shrink-0"></span>
+                <div>
+                  <p class="text-xs text-white font-medium">FERPA Alert — QuizGenie v2.3</p>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Student PII detected in third-party API calls. 3 schools affected. Action required.</p>
+                  <p class="text-[10px] text-slate-500 mt-1">2 hours ago · Auto-flagged</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                <span class="w-2 h-2 rounded-full bg-amber-400 mt-1.5 flex-shrink-0"></span>
+                <div>
+                  <p class="text-xs text-white font-medium">COPPA Review — StoryBot AI</p>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Pending parental consent verification for K-5 usage. 12 classrooms on hold.</p>
+                  <p class="text-[10px] text-slate-500 mt-1">1 day ago · Pending review</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3 p-3 rounded-lg bg-brand-500/5 border border-brand-500/20">
+                <span class="w-2 h-2 rounded-full bg-brand-400 mt-1.5 flex-shrink-0"></span>
+                <div>
+                  <p class="text-xs text-white font-medium">Compliance Passed — MagicSchool AI</p>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Quarterly FERPA/COPPA audit completed. All 47 schools cleared.</p>
+                  <p class="text-[10px] text-slate-500 mt-1">3 days ago · Verified</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                <span class="w-2 h-2 rounded-full bg-amber-400 mt-1.5 flex-shrink-0"></span>
+                <div>
+                  <p class="text-xs text-white font-medium">Data Retention — Canva Magic Studio</p>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Student work stored beyond 90-day policy window. Automated purge scheduled.</p>
+                  <p class="text-[10px] text-slate-500 mt-1">5 days ago · Scheduled</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================== -->
+      <!-- AI REGISTRY -->
+      <!-- =============================== -->
+      <div id="section-registry" class="section-panel">
+        <div class="card rounded-xl overflow-hidden">
+          <div class="p-6 border-b border-slate-700/30 flex items-center justify-between">
+            <div>
+              <h3 class="font-display text-white font-medium">Centralized AI Tool Registry</h3>
+              <p class="text-xs text-slate-500 mt-1">District-approved platforms currently active across schools</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <input type="text" placeholder="Search tools…" class="bg-slate-900 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300 placeholder-slate-500 w-52 focus:outline-none focus:ring-1 focus:ring-brand-500/50">
+              <button class="bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Add Tool
+              </button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="border-b border-slate-700/30 text-[10px] uppercase tracking-wider text-slate-500">
+                  <th class="text-left py-3 px-6">Tool Name</th>
+                  <th class="text-left py-3 px-4">Category</th>
+                  <th class="text-left py-3 px-4">FERPA</th>
+                  <th class="text-left py-3 px-4">COPPA</th>
+                  <th class="text-left py-3 px-4">Grade Levels</th>
+                  <th class="text-left py-3 px-4">Active Schools</th>
+                  <th class="text-left py-3 px-4">Active Teachers</th>
+                  <th class="text-left py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody id="registryTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================== -->
+      <!-- COMPLIANCE -->
+      <!-- =============================== -->
+      <div id="section-compliance" class="section-panel">
+        <div class="grid grid-cols-3 gap-6 mb-6">
+          <div class="stat-card card rounded-xl p-6" data-accent="green">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-xs text-slate-400">FERPA Compliance Rate</p>
+              <span class="px-2 py-0.5 bg-brand-500/20 text-brand-400 rounded text-[10px]">On Track</span>
+            </div>
+            <p class="text-3xl font-display text-white font-semibold">91.7%</p>
+            <div class="w-full h-1.5 bg-slate-800 rounded-full mt-3"><div class="h-full bg-gradient-to-r from-brand-600 to-brand-400 rounded-full" style="width:91.7%"></div></div>
+          </div>
+          <div class="stat-card card rounded-xl p-6" data-accent="gold">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-xs text-slate-400">COPPA Compliance Rate</p>
+              <span class="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded text-[10px]">Needs Attention</span>
+            </div>
+            <p class="text-3xl font-display text-white font-semibold">83.3%</p>
+            <div class="w-full h-1.5 bg-slate-800 rounded-full mt-3"><div class="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full" style="width:83.3%"></div></div>
+          </div>
+          <div class="stat-card card rounded-xl p-6" data-accent="coral">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-xs text-slate-400">Open Violations</p>
+              <span class="px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-[10px]">Action Required</span>
+            </div>
+            <p class="text-3xl font-display text-white font-semibold">4</p>
+            <p class="text-xs text-slate-500 mt-2">2 critical · 2 warnings</p>
+          </div>
+        </div>
+        <div class="card rounded-xl p-6">
+          <h3 class="font-display text-white font-medium mb-4">Automated Compliance Scan Results</h3>
+          <div class="space-y-3" id="complianceScans">
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================== -->
+      <!-- AI LITERACY -->
+      <!-- =============================== -->
+      <div id="section-literacy" class="section-panel">
+        <div class="grid grid-cols-2 gap-6 mb-6">
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white font-medium mb-2">Teacher AI Literacy Benchmarking</h3>
+            <p class="text-xs text-slate-500 mb-5">Initial and quarterly survey results — confidence levels by category</p>
+            <canvas id="literacyRadar" height="260"></canvas>
+          </div>
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white font-medium mb-2">Literacy Growth Over Time</h3>
+            <p class="text-xs text-slate-500 mb-5">Average confidence score (1-10) by quarter</p>
+            <canvas id="literacyTrend" height="260"></canvas>
+          </div>
+        </div>
+        <div class="card rounded-xl p-6">
+          <h3 class="font-display text-white font-medium mb-4">School-Level Breakdown</h3>
+          <div class="grid grid-cols-4 gap-4" id="schoolLiteracy"></div>
+        </div>
+      </div>
+
+      <!-- =============================== -->
+      <!-- ADMIN EFFICIENCY -->
+      <!-- =============================== -->
+      <div id="section-efficiency" class="section-panel">
+        <div class="grid grid-cols-4 gap-4 mb-6">
+          <div class="stat-card card rounded-xl p-5" data-accent="coral">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Lesson Planning</p>
+            <p class="text-2xl font-display text-white font-semibold">-3.1<span class="text-sm text-slate-400">hrs/wk</span></p>
+            <p class="text-xs text-brand-400 mt-1">↓ 42% reduction</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="sky">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Email Drafting</p>
+            <p class="text-2xl font-display text-white font-semibold">-1.4<span class="text-sm text-slate-400">hrs/wk</span></p>
+            <p class="text-xs text-accent-sky mt-1">↓ 58% reduction</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="gold">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">IEP Generation</p>
+            <p class="text-2xl font-display text-white font-semibold">-2.8<span class="text-sm text-slate-400">hrs/case</span></p>
+            <p class="text-xs text-accent-gold mt-1">↓ 65% reduction</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="violet">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Resources Created</p>
+            <p class="text-2xl font-display text-white font-semibold">14,230</p>
+            <p class="text-xs text-accent-violet mt-1">This quarter</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white font-medium mb-4">Time Savings by Task Category</h3>
+            <canvas id="timeSavingsChart" height="220"></canvas>
+          </div>
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white font-medium mb-4">AI-Generated Resources by Type</h3>
+            <canvas id="resourcesChart" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================== -->
+      <!-- INSTRUCTIONAL QUALITY -->
+      <!-- =============================== -->
+      <div id="section-instruction" class="section-panel">
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div class="stat-card card rounded-xl p-5" data-accent="green">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Differentiation Rate</p>
+            <p class="text-2xl font-display text-white font-semibold">67%</p>
+            <p class="text-xs text-slate-400 mt-1">of AI-generated texts have multiple reading levels</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="sky">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Avg Feedback Time</p>
+            <p class="text-2xl font-display text-white font-semibold">4.2<span class="text-sm text-slate-400">hrs</span></p>
+            <p class="text-xs text-accent-sky mt-1">↓ from 18.5 hrs (pre-AI)</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="violet">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Prompt Library Usage</p>
+            <p class="text-2xl font-display text-white font-semibold">892</p>
+            <p class="text-xs text-accent-violet mt-1">active prompts across district</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-6 mb-6">
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white font-medium mb-4">Feedback Loop Speed (Hours)</h3>
+            <p class="text-xs text-slate-500 mb-4">Time from student submission to AI-assisted formative feedback delivery</p>
+            <canvas id="feedbackChart" height="220"></canvas>
+          </div>
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white font-medium mb-4">Top Prompt Templates</h3>
+            <p class="text-xs text-slate-500 mb-4">Most effective and frequently used by top-performing teachers</p>
+            <div class="space-y-3" id="promptLibrary"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================== -->
+      <!-- ENGAGEMENT -->
+      <!-- =============================== -->
+      <div id="section-engagement" class="section-panel">
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div class="stat-card card rounded-xl p-5" data-accent="green">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Avg Participation</p>
+            <p class="text-2xl font-display text-white font-semibold">84%</p>
+            <p class="text-xs text-brand-400 mt-1">↑ 11% in AI-integrated classes</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="gold">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Attendance Spike</p>
+            <p class="text-2xl font-display text-white font-semibold">+6.8%</p>
+            <p class="text-xs text-accent-gold mt-1">On AI-integrated lesson days</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="sky">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Non-Verbal Engagement</p>
+            <p class="text-2xl font-display text-white font-semibold">72%</p>
+            <p class="text-xs text-accent-sky mt-1">Eye-tracking & focus metrics</p>
+          </div>
+        </div>
+        <div class="card rounded-xl p-6">
+          <h3 class="font-display text-white font-medium mb-4">Engagement Levels: AI-Integrated vs. Traditional Lessons</h3>
+          <canvas id="engagementChart" height="250"></canvas>
+        </div>
+      </div>
+
+      <!-- =============================== -->
+      <!-- INTERVENTIONS -->
+      <!-- =============================== -->
+      <div id="section-interventions" class="section-panel">
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div class="stat-card card rounded-xl p-5" data-accent="coral">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">At-Risk Identified</p>
+            <p class="text-2xl font-display text-white font-semibold">312</p>
+            <p class="text-xs text-accent-coral mt-1">Via AI predictive analytics</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="green">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Intervention Success</p>
+            <p class="text-2xl font-display text-white font-semibold">73%</p>
+            <p class="text-xs text-brand-400 mt-1">Students back on track</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="sky">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Avg Detection Speed</p>
+            <p class="text-2xl font-display text-white font-semibold">3.2<span class="text-sm text-slate-400">days</span></p>
+            <p class="text-xs text-accent-sky mt-1">↓ from 14 days (pre-AI)</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white font-medium mb-4">Intervention Funnel</h3>
+            <canvas id="interventionFunnel" height="240"></canvas>
+          </div>
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white font-medium mb-4">Recent Interventions</h3>
+            <div class="space-y-3" id="interventionList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================== -->
+      <!-- LEARNING OUTCOMES -->
+      <!-- =============================== -->
+      <div id="section-outcomes" class="section-panel">
+        <div class="grid grid-cols-4 gap-4 mb-6">
+          <div class="stat-card card rounded-xl p-5" data-accent="green">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Adaptive Growth</p>
+            <p class="text-2xl font-display text-white font-semibold">+8.3%</p>
+            <p class="text-xs text-brand-400 mt-1">AI vs traditional cohort</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="gold">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">AI-Assisted Work</p>
+            <p class="text-2xl font-display text-white font-semibold">61%</p>
+            <p class="text-xs text-accent-gold mt-1">Proper AI attribution rate</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="coral">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">AI-Generated Flags</p>
+            <p class="text-2xl font-display text-white font-semibold">8.4%</p>
+            <p class="text-xs text-accent-coral mt-1">↓ from 14.2% last quarter</p>
+          </div>
+          <div class="stat-card card rounded-xl p-5" data-accent="violet">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Critical Thinking Score</p>
+            <p class="text-2xl font-display text-white font-semibold">7.2<span class="text-sm text-slate-400">/10</span></p>
+            <p class="text-xs text-accent-violet mt-1">↑ from 6.1 (pre-AI)</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-6 mb-6">
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white font-medium mb-4">Pre/Post Test Scores: AI Adaptive vs. Traditional</h3>
+            <canvas id="prePostChart" height="240"></canvas>
+          </div>
+          <div class="card rounded-xl p-6">
+            <h3 class="font-display text-white font-medium mb-4">AI Content Integrity Tracking</h3>
+            <p class="text-xs text-slate-500 mb-4">Student submissions classified by AI involvement level</p>
+            <canvas id="integrityChart" height="240"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Mobile sidebar toggle -->
+<button id="mobileToggle" class="fixed bottom-4 right-4 z-50 lg:hidden bg-brand-600 text-white p-3 rounded-full shadow-lg">
+  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const registryData = [
+  { name: 'MagicSchool AI', category: 'Lesson Planning', ferpa: true, coppa: true, grades: 'K-12', schools: 47, teachers: 1820, status: 'Active' },
+  { name: 'Claude (Anthropic)', category: 'General Assistant', ferpa: true, coppa: true, grades: '6-12', schools: 38, teachers: 945, status: 'Active' },
+  { name: 'Canva Magic Studio', category: 'Content Creation', ferpa: true, coppa: true, grades: 'K-12', schools: 44, teachers: 1650, status: 'Active' },
+  { name: 'Khanmigo', category: 'Adaptive Learning', ferpa: true, coppa: true, grades: '3-12', schools: 31, teachers: 620, status: 'Active' },
+  { name: 'DreamBox Learning', category: 'Math Adaptive', ferpa: true, coppa: true, grades: 'K-8', schools: 28, teachers: 410, status: 'Active' },
+  { name: 'Diffit', category: 'Differentiation', ferpa: true, coppa: true, grades: 'K-12', schools: 35, teachers: 890, status: 'Active' },
+  { name: 'Brisk Teaching', category: 'Feedback & Grading', ferpa: true, coppa: false, grades: '6-12', schools: 22, teachers: 340, status: 'Active' },
+  { name: 'QuizGenie v2.3', category: 'Assessment', ferpa: false, coppa: false, grades: '3-12', schools: 3, teachers: 45, status: 'Under Review' },
+  { name: 'Curipod', category: 'Engagement', ferpa: true, coppa: true, grades: 'K-12', schools: 40, teachers: 780, status: 'Active' },
+  { name: 'SchoolAI', category: 'Student Chatbot', ferpa: true, coppa: true, grades: '3-12', schools: 18, teachers: 290, status: 'Active' },
+  { name: 'StoryBot AI', category: 'Creative Writing', ferpa: true, coppa: false, grades: 'K-5', schools: 12, teachers: 180, status: 'Pending' },
+  { name: 'Eduaide.AI', category: 'Lesson Design', ferpa: true, coppa: true, grades: 'K-12', schools: 25, teachers: 420, status: 'Active' },
+];
+
+const complianceScans = [
+  { tool: 'QuizGenie v2.3', issue: 'Student PII transmitted to third-party analytics endpoint without encryption', severity: 'critical', date: 'Feb 6, 2026', status: 'Open' },
+  { tool: 'StoryBot AI', issue: 'Missing verifiable parental consent mechanism for students under 13', severity: 'critical', date: 'Feb 5, 2026', status: 'Open' },
+  { tool: 'Brisk Teaching', issue: 'COPPA consent form outdated — needs renewal for current school year', severity: 'warning', date: 'Feb 3, 2026', status: 'In Progress' },
+  { tool: 'Canva Magic Studio', issue: 'Student artwork stored beyond 90-day district retention policy', severity: 'warning', date: 'Feb 1, 2026', status: 'Scheduled' },
+  { tool: 'MagicSchool AI', issue: 'All checks passed — FERPA & COPPA compliant', severity: 'pass', date: 'Jan 30, 2026', status: 'Resolved' },
+  { tool: 'Claude (Anthropic)', issue: 'All checks passed — no student data retention detected', severity: 'pass', date: 'Jan 30, 2026', status: 'Resolved' },
+  { tool: 'Khanmigo', issue: 'All checks passed — data handling meets district standards', severity: 'pass', date: 'Jan 28, 2026', status: 'Resolved' },
+];
+
+const promptTemplates = [
+  { name: 'Differentiated Reading Generator', uses: 2340, rating: 4.8, subject: 'ELA', desc: 'Creates 3 reading levels from a single source text' },
+  { name: 'IEP Goal Writer', uses: 1890, rating: 4.9, subject: 'SPED', desc: 'Generates measurable IEP goals from assessment data' },
+  { name: 'Formative Feedback Loop', uses: 1650, rating: 4.7, subject: 'All', desc: 'Provides personalized student feedback with growth areas' },
+  { name: 'Rubric Builder Pro', uses: 1420, rating: 4.6, subject: 'All', desc: 'Standards-aligned rubric generation with exemplars' },
+  { name: 'ESL Scaffolding Assistant', uses: 1180, rating: 4.8, subject: 'ESL', desc: 'Adapts content with visual supports and sentence frames' },
+  { name: 'Parent Communication Draft', uses: 980, rating: 4.5, subject: 'Admin', desc: 'Professional parent emails from quick bullet points' },
+];
+
+const interventions = [
+  { student: 'Student #4281', risk: 'High', trigger: 'Grade decline + attendance drop', action: 'Counselor meeting + tutoring assigned', outcome: 'Improving', days: 2 },
+  { student: 'Student #3892', risk: 'Medium', trigger: 'Engagement metrics below threshold', action: 'Differentiated materials provided', outcome: 'On Track', days: 3 },
+  { student: 'Student #5104', risk: 'High', trigger: 'Social-emotional indicators flagged', action: 'Social worker referral', outcome: 'In Progress', days: 1 },
+  { student: 'Student #2756', risk: 'Medium', trigger: 'Math adaptive platform stagnation', action: 'Skill-specific intervention plan', outcome: 'Improving', days: 4 },
+  { student: 'Student #6033', risk: 'Low', trigger: 'Writing quality regression detected', action: 'Peer tutoring + AI writing coach', outcome: 'On Track', days: 5 },
+];
+
+const schoolLiteracyData = [
+  { name: 'Lincoln Elementary', score: 7.8, level: 'Advanced', teachers: 42 },
+  { name: 'Roosevelt Middle', score: 7.2, level: 'Proficient', teachers: 56 },
+  { name: 'Jefferson High', score: 6.5, level: 'Proficient', teachers: 78 },
+  { name: 'Washington K-8', score: 8.1, level: 'Advanced', teachers: 38 },
+  { name: 'Adams Elementary', score: 5.9, level: 'Emerging', teachers: 31 },
+  { name: 'Madison High', score: 7.4, level: 'Proficient', teachers: 82 },
+  { name: 'Monroe Middle', score: 6.8, level: 'Proficient', teachers: 48 },
+  { name: 'Jackson Elementary', score: 5.2, level: 'Emerging', teachers: 29 },
+];
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+const sectionTitles = {
+  overview: ['Dashboard Overview', 'AI integration tracking across 47 schools · 2,340 teachers · 38,200 students'],
+  registry: ['AI Tool Registry', 'Centralized directory of all district-approved AI platforms'],
+  compliance: ['Privacy & Compliance', 'FERPA/COPPA automated monitoring and audit results'],
+  literacy: ['Teacher AI Literacy', 'Benchmarking and quarterly confidence assessments'],
+  efficiency: ['Administrative Efficiency', 'Time savings and resource generation metrics from AI usage'],
+  instruction: ['Instructional Quality', 'Differentiation, feedback speed, and prompt library analytics'],
+  engagement: ['Student Engagement', 'Participation, attendance, and engagement analytics for AI-integrated lessons'],
+  interventions: ['Interventions', 'AI-driven at-risk identification and intervention tracking'],
+  outcomes: ['Learning Outcomes', 'Test scores, adaptive growth, and academic integrity monitoring'],
+};
+
+document.querySelectorAll('.sidebar-link').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const section = link.dataset.section;
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+    document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(`section-${section}`).classList.add('active');
+    document.getElementById('pageTitle').textContent = sectionTitles[section][0];
+    document.getElementById('pageSubtitle').textContent = sectionTitles[section][1];
+    initChartsForSection(section);
+  });
+});
+
+// ============================================================
+// RENDER TABLES & LISTS
+// ============================================================
+function renderRegistry() {
+  const tbody = document.getElementById('registryTable');
+  tbody.innerHTML = registryData.map(t => `
+    <tr class="registry-row border-b border-slate-800/30">
+      <td class="py-3 px-6"><span class="text-white font-medium">${t.name}</span></td>
+      <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]">${t.category}</span></td>
+      <td class="py-3 px-4">${t.ferpa ? '<span class="text-brand-400">✓ Pass</span>' : '<span class="text-red-400">✗ Fail</span>'}</td>
+      <td class="py-3 px-4">${t.coppa ? '<span class="text-brand-400">✓ Pass</span>' : '<span class="text-red-400">✗ Fail</span>'}</td>
+      <td class="py-3 px-4 text-slate-400">${t.grades}</td>
+      <td class="py-3 px-4 text-slate-300">${t.schools}</td>
+      <td class="py-3 px-4 text-slate-300">${t.teachers.toLocaleString()}</td>
+      <td class="py-3 px-4">
+        <span class="px-2 py-0.5 rounded text-[10px] ${t.status === 'Active' ? 'bg-brand-500/15 text-brand-400' : t.status === 'Under Review' ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'}">${t.status}</span>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderCompliance() {
+  const container = document.getElementById('complianceScans');
+  container.innerHTML = complianceScans.map(s => {
+    const colors = { critical: 'red', warning: 'amber', pass: 'emerald' };
+    const c = colors[s.severity] || 'slate';
+    return `
+      <div class="flex items-start gap-3 p-4 rounded-lg bg-${c}-500/5 border border-${c}-500/15">
+        <span class="w-2 h-2 rounded-full bg-${c}-400 mt-1.5 flex-shrink-0 ${s.severity === 'critical' ? 'compliance-badge' : ''}"></span>
+        <div class="flex-1">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-white font-medium">${s.tool}</p>
+            <span class="px-2 py-0.5 rounded text-[10px] bg-${c}-500/20 text-${c}-400">${s.status}</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">${s.issue}</p>
+          <p class="text-[10px] text-slate-500 mt-1">${s.date}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPrompts() {
+  const container = document.getElementById('promptLibrary');
+  container.innerHTML = promptTemplates.map((p, i) => `
+    <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-800/30 border border-slate-700/20">
+      <span class="text-lg font-display text-slate-600 w-6 text-right">${i + 1}</span>
+      <div class="flex-1 min-w-0">
+        <p class="text-xs text-white font-medium">${p.name}</p>
+        <p class="text-[10px] text-slate-500 mt-0.5">${p.desc}</p>
+      </div>
+      <div class="text-right flex-shrink-0">
+        <p class="text-xs text-slate-300">${p.uses.toLocaleString()} uses</p>
+        <p class="text-[10px] text-accent-gold">★ ${p.rating}</p>
+      </div>
+      <span class="px-2 py-0.5 rounded bg-slate-700/60 text-slate-400 text-[10px]">${p.subject}</span>
+    </div>
+  `).join('');
+}
+
+function renderInterventions() {
+  const container = document.getElementById('interventionList');
+  container.innerHTML = interventions.map(iv => {
+    const riskColor = iv.risk === 'High' ? 'red' : iv.risk === 'Medium' ? 'amber' : 'blue';
+    const outcomeColor = iv.outcome === 'Improving' ? 'brand' : iv.outcome === 'On Track' ? 'emerald' : 'amber';
+    return `
+      <div class="p-3 rounded-lg bg-slate-800/30 border border-slate-700/20">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs text-white font-medium">${iv.student}</span>
+          <span class="px-2 py-0.5 rounded text-[10px] bg-${riskColor}-500/15 text-${riskColor}-400">${iv.risk} Risk</span>
+        </div>
+        <p class="text-[11px] text-slate-400"><span class="text-slate-500">Trigger:</span> ${iv.trigger}</p>
+        <p class="text-[11px] text-slate-400 mt-0.5"><span class="text-slate-500">Action:</span> ${iv.action}</p>
+        <div class="flex items-center justify-between mt-2">
+          <span class="text-[10px] text-slate-500">Detected in ${iv.days} days</span>
+          <span class="text-[10px] text-${outcomeColor}-400 font-medium">${iv.outcome}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSchoolLiteracy() {
+  const container = document.getElementById('schoolLiteracy');
+  container.innerHTML = schoolLiteracyData.map(s => {
+    const pct = (s.score / 10) * 100;
+    const color = s.level === 'Advanced' ? 'brand' : s.level === 'Proficient' ? 'accent-sky' : 'accent-coral';
+    return `
+      <div class="p-4 rounded-lg bg-slate-800/30 border border-slate-700/20">
+        <p class="text-xs text-white font-medium mb-1">${s.name}</p>
+        <p class="text-[10px] text-slate-500 mb-3">${s.teachers} teachers</p>
+        <div class="flex items-end gap-2 mb-1.5">
+          <span class="text-xl font-display text-white font-semibold">${s.score}</span>
+          <span class="text-[10px] text-slate-500 mb-1">/10</span>
+        </div>
+        <div class="w-full h-1.5 bg-slate-700 rounded-full"><div class="h-full bg-${color === 'brand' ? 'brand-400' : color === 'accent-sky' ? 'sky-400' : 'orange-400'} rounded-full" style="width:${pct}%"></div></div>
+        <span class="text-[10px] text-slate-500 mt-1 inline-block">${s.level}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+const chartInstances = {};
+const chartDefaults = {
+  color: '#94a3b8',
+  borderColor: 'rgba(71, 85, 105, 0.3)',
+};
+Chart.defaults.color = chartDefaults.color;
+Chart.defaults.borderColor = chartDefaults.borderColor;
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size = 11;
+
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function initOverviewCharts() {
+  // Adoption Trend
+  destroyChart('adoptionChart');
+  const ctx1 = document.getElementById('adoptionChart').getContext('2d');
+  chartInstances['adoptionChart'] = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
+      datasets: [
+        {
+          label: 'Active Users',
+          data: [420, 680, 1100, 1450, 1680, 1920, 2120],
+          borderColor: '#4aab7c',
+          backgroundColor: 'rgba(74, 171, 124, 0.08)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: '#4aab7c',
+        },
+        {
+          label: 'Resources Created',
+          data: [850, 1900, 4200, 6800, 9100, 11800, 14230],
+          borderColor: '#d4a853',
+          backgroundColor: 'rgba(212, 168, 83, 0.05)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: '#d4a853',
+          yAxisID: 'y1',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(71,85,105,0.15)' }, ticks: { font: { size: 10 } } },
+        y1: { beginAtZero: true, position: 'right', grid: { display: false }, ticks: { font: { size: 10 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  // Literacy Donut
+  destroyChart('literacyDonut');
+  const ctx2 = document.getElementById('literacyDonut').getContext('2d');
+  chartInstances['literacyDonut'] = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: ['Advanced', 'Proficient', 'Emerging'],
+      datasets: [{
+        data: [42, 35, 23],
+        backgroundColor: ['#4aab7c', '#d4a853', '#e07a5f'],
+        borderWidth: 0,
+        spacing: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '68%',
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Outcomes Bar
+  destroyChart('outcomesBar');
+  const ctx3 = document.getElementById('outcomesBar').getContext('2d');
+  chartInstances['outcomesBar'] = new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: ['ELA', 'Math', 'Science', 'Social Studies', 'World Lang.'],
+      datasets: [
+        { label: 'AI Cohort', data: [78, 74, 81, 76, 72], backgroundColor: '#4aab7c', borderRadius: 4 },
+        { label: 'Traditional', data: [71, 68, 73, 72, 69], backgroundColor: 'rgba(71,85,105,0.4)', borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, padding: 16, font: { size: 10 } } }
+      },
+      scales: {
+        y: { beginAtZero: true, max: 100, grid: { color: 'rgba(71,85,105,0.15)' }, ticks: { font: { size: 10 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function initLiteracyCharts() {
+  // Radar
+  destroyChart('literacyRadar');
+  const ctx = document.getElementById('literacyRadar').getContext('2d');
+  chartInstances['literacyRadar'] = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Prompt Engineering', 'Data Privacy', 'Differentiation', 'Assessment Design', 'Student Coaching', 'Ethical Use'],
+      datasets: [
+        { label: 'Current (Q1 2026)', data: [7.2, 6.8, 7.5, 6.9, 7.1, 7.8], borderColor: '#4aab7c', backgroundColor: 'rgba(74,171,124,0.15)', pointBackgroundColor: '#4aab7c', pointRadius: 4 },
+        { label: 'Baseline (Aug 2025)', data: [4.1, 5.2, 3.8, 4.5, 3.2, 5.9], borderColor: '#d4a853', backgroundColor: 'rgba(212,168,83,0.08)', pointBackgroundColor: '#d4a853', pointRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 16, font: { size: 10 } } } },
+      scales: { r: { beginAtZero: true, max: 10, grid: { color: 'rgba(71,85,105,0.2)' }, angleLines: { color: 'rgba(71,85,105,0.2)' }, ticks: { display: false }, pointLabels: { font: { size: 10 } } } }
+    }
+  });
+
+  // Trend
+  destroyChart('literacyTrend');
+  const ctx2 = document.getElementById('literacyTrend').getContext('2d');
+  chartInstances['literacyTrend'] = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: ['Baseline', 'Q1 2025', 'Q2 2025', 'Q3 2025', 'Q4 2025', 'Q1 2026'],
+      datasets: [
+        { label: 'Instruction Use', data: [3.8, 4.6, 5.4, 6.2, 6.8, 7.2], borderColor: '#4aab7c', tension: 0.4, pointRadius: 4, pointBackgroundColor: '#4aab7c' },
+        { label: 'Admin Use', data: [5.1, 5.9, 6.5, 7.0, 7.3, 7.6], borderColor: '#5ba4cf', tension: 0.4, pointRadius: 4, pointBackgroundColor: '#5ba4cf' },
+        { label: 'Ethics Understanding', data: [5.4, 5.8, 6.2, 6.9, 7.4, 7.8], borderColor: '#8b7fc7', tension: 0.4, pointRadius: 4, pointBackgroundColor: '#8b7fc7' },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 16, font: { size: 10 } } } },
+      scales: {
+        y: { beginAtZero: true, max: 10, grid: { color: 'rgba(71,85,105,0.15)' }, ticks: { font: { size: 10 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function initEfficiencyCharts() {
+  destroyChart('timeSavingsChart');
+  const ctx = document.getElementById('timeSavingsChart').getContext('2d');
+  chartInstances['timeSavingsChart'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Lesson Planning', 'Grading/Feedback', 'IEP Writing', 'Email/Comms', 'Report Cards', 'Meeting Prep'],
+      datasets: [
+        { label: 'Hours Saved/Week', data: [3.1, 2.4, 2.8, 1.4, 1.2, 0.8], backgroundColor: '#4aab7c', borderRadius: 4 },
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: 'rgba(71,85,105,0.15)' }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  destroyChart('resourcesChart');
+  const ctx2 = document.getElementById('resourcesChart').getContext('2d');
+  chartInstances['resourcesChart'] = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: ['Worksheets', 'Rubrics', 'Slide Decks', 'Quizzes', 'IEP Docs', 'Parent Letters'],
+      datasets: [{
+        data: [3820, 2940, 2680, 2210, 1580, 1000],
+        backgroundColor: ['#4aab7c', '#d4a853', '#5ba4cf', '#8b7fc7', '#e07a5f', '#6b7280'],
+        borderWidth: 0,
+        spacing: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '55%',
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 10 } } } }
+    }
+  });
+}
+
+function initInstructionCharts() {
+  destroyChart('feedbackChart');
+  const ctx = document.getElementById('feedbackChart').getContext('2d');
+  chartInstances['feedbackChart'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['ELA', 'Math', 'Science', 'Social Studies', 'World Lang.', 'Arts'],
+      datasets: [
+        { label: 'Pre-AI', data: [22, 16, 20, 18, 24, 14], backgroundColor: 'rgba(71,85,105,0.4)', borderRadius: 4 },
+        { label: 'With AI', data: [5.2, 3.8, 4.6, 4.0, 6.2, 3.0], backgroundColor: '#5ba4cf', borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 16, font: { size: 10 } } } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(71,85,105,0.15)' }, ticks: { font: { size: 10 } }, title: { display: true, text: 'Hours', font: { size: 10 }, color: '#64748b' } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function initEngagementCharts() {
+  destroyChart('engagementChart');
+  const ctx = document.getElementById('engagementChart').getContext('2d');
+  chartInstances['engagementChart'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'],
+      datasets: [
+        { label: 'AI-Integrated Lessons', data: [74, 78, 80, 83, 82, 85, 84, 87], borderColor: '#4aab7c', backgroundColor: 'rgba(74,171,124,0.1)', fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#4aab7c' },
+        { label: 'Traditional Lessons', data: [72, 71, 70, 72, 69, 71, 70, 73], borderColor: 'rgba(71,85,105,0.5)', backgroundColor: 'rgba(71,85,105,0.05)', fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#475569' },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 16, font: { size: 10 } } } },
+      scales: {
+        y: { min: 60, max: 100, grid: { color: 'rgba(71,85,105,0.15)' }, ticks: { font: { size: 10 }, callback: v => v + '%' } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function initInterventionCharts() {
+  destroyChart('interventionFunnel');
+  const ctx = document.getElementById('interventionFunnel').getContext('2d');
+  chartInstances['interventionFunnel'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['AI Flagged', 'Teacher Reviewed', 'Intervention Started', 'Completed', 'Successful'],
+      datasets: [{
+        data: [312, 289, 264, 228, 171],
+        backgroundColor: ['#e07a5f', '#d4a853', '#5ba4cf', '#8b7fc7', '#4aab7c'],
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(71,85,105,0.15)' }, ticks: { font: { size: 10 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function initOutcomeCharts() {
+  destroyChart('prePostChart');
+  const ctx = document.getElementById('prePostChart').getContext('2d');
+  chartInstances['prePostChart'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['ELA', 'Math', 'Science', 'Social Studies'],
+      datasets: [
+        { label: 'AI Cohort - Pre', data: [62, 58, 64, 60], backgroundColor: 'rgba(74,171,124,0.3)', borderRadius: 4 },
+        { label: 'AI Cohort - Post', data: [78, 74, 81, 76], backgroundColor: '#4aab7c', borderRadius: 4 },
+        { label: 'Traditional - Pre', data: [63, 59, 63, 61], backgroundColor: 'rgba(71,85,105,0.3)', borderRadius: 4 },
+        { label: 'Traditional - Post', data: [71, 68, 73, 72], backgroundColor: 'rgba(71,85,105,0.6)', borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 10 } } } },
+      scales: {
+        y: { beginAtZero: true, max: 100, grid: { color: 'rgba(71,85,105,0.15)' }, ticks: { font: { size: 10 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  destroyChart('integrityChart');
+  const ctx2 = document.getElementById('integrityChart').getContext('2d');
+  chartInstances['integrityChart'] = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
+      datasets: [
+        { label: 'Original Work', data: [68, 70, 72, 74, 77, 79], backgroundColor: '#4aab7c', borderRadius: 4 },
+        { label: 'AI-Assisted (Cited)', data: [14, 16, 18, 17, 15, 13], backgroundColor: '#5ba4cf', borderRadius: 4 },
+        { label: 'AI-Generated (Flagged)', data: [18, 14, 10, 9, 8, 8], backgroundColor: '#e07a5f', borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 10 } } } },
+      scales: {
+        y: { stacked: true, beginAtZero: true, max: 100, grid: { color: 'rgba(71,85,105,0.15)' }, ticks: { font: { size: 10 }, callback: v => v + '%' } },
+        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function initChartsForSection(section) {
+  switch (section) {
+    case 'overview': initOverviewCharts(); break;
+    case 'literacy': initLiteracyCharts(); break;
+    case 'efficiency': initEfficiencyCharts(); break;
+    case 'instruction': initInstructionCharts(); break;
+    case 'engagement': initEngagementCharts(); break;
+    case 'interventions': initInterventionCharts(); break;
+    case 'outcomes': initOutcomeCharts(); break;
+  }
+}
+
+function exportReport() {
+  const btn = event.target.closest('button');
+  const orig = btn.innerHTML;
+  btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Generating…`;
+  setTimeout(() => {
+    btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Report Ready`;
+    setTimeout(() => { btn.innerHTML = orig; }, 2000);
+  }, 1500);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderRegistry();
+  renderCompliance();
+  renderPrompts();
+  renderInterventions();
+  renderSchoolLiteracy();
+  initOverviewCharts();
+});
+</script>
+</body>
+</html>
